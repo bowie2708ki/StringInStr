@@ -1,0 +1,37 @@
+$sText    = ClipGet()
+
+$sText = StringReplace($sText, Chr(13), "")
+$s1 = StringToBinary($sText, 4)
+$sSource = ""
+For $j = 1 To BinaryLen($s1)
+    $sSource &= "%" & StringTrimLeft(BinaryMid($s1, $j, 1), 2)
+Next
+
+$sFrom = "en"
+$sTo   = "ko"
+$sUrl  = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" & $sFrom & "&tl=" & $sTo & "&dt=t&q=" & $sSource
+$sData = BinaryToString(InetRead($sUrl), 4)
+$aData = StringSplit($sData, "]", 1)
+$sResult = ""
+For $i = 1 To $aData[0]
+    $s1 = StringStripWS($aData[$i], 3)
+    If StringLeft($s1, 4) = '[[["' Or StringLeft($s1, 3) = ',["' Then
+        $s1 = StringMid($s1, StringInStr($s1, '"')+1)
+        $s1 = StringLeft($s1, StringInStr($s1, '","')-1)
+        $n1 = 0
+        While StringInStr($s1, "\n")
+            $s1 = StringReplace($s1, "\n", "")
+            $n1 += 1
+        WEnd
+        For $j = 1 To $n1
+            $s1 = $s1 & " " & @CRLF
+        Next
+        $sResult &= $s1 & " " & @CRLF
+    EndIf
+Next
+$sResult = StringReplace(StringLeft($sResult, StringLen($sResult)-3), '\"', '"')
+
+ConsoleWrite("+ Source : " & $sText & @CRLF)
+ConsoleWrite("> Result : " & $sResult & @CRLF)
+
+ClipPut($sResult)
